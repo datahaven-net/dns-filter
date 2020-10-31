@@ -3,12 +3,12 @@
 `dns-filter` is your custom forwarding DNS server that redirects input traffic matching given regular expression to another host.
 
 
-##### Usage:
+#### Usage:
 
     python3 dns_filter.py --verbose --port 10053 --to xyz.net --regexp "^abcd.+?.com$"
 
 
-##### Options:
+#### Options:
 
     -h, --help            show this help message and exit
     -v, --verbose         log incoming requests to the console
@@ -20,7 +20,7 @@
                           interface IP to listen on
 
 
-##### Example:
+#### Example:
 
 Install `Twisted` library first:
 
