@@ -5,7 +5,7 @@
 
 #### Usage:
 
-    python3 dns_filter.py --verbose --port 10053 --to xyz.net --regexp "^abcd.+?.com$"
+    python3 dns_filter.py --verbose --port 10053 --cname xyz.net --ns1 ns1.example.com. --ns2 ns2.example.com. --regexp "^abcd.+?.com$"
 
 
 #### Options:
@@ -13,7 +13,9 @@
     -h, --help            show this help message and exit
     -v, --verbose         log incoming requests to the console
     -p PORT, --port=PORT  DNS server port number
-    -t TO, --to=TO        destination CNAME
+    -t CNAME, --cname=CNAME        destination CNAME
+    --ns1=NAMESERVER1        destination NAMESERVER1
+    --ns2=NAMESERVER2       destination NAMESERVER2
     -r REGEXP, --regexp=REGEXP
                           regular expression to be checked
     -i INTERFACE, --interface=INTERFACE
@@ -29,7 +31,7 @@ Install `Twisted` library first:
 
 Run `dns-filter` server locally:
 
-    $ python3 dns_filter.py --verbose --port=10053 --to=xyz.net --regexp="^abcd.+?.com$"
+    $ python3 dns_filter.py --verbose --port 10053 --cname xyz.net --ns1 ns1.example.com. --ns2 ns2.example.com. --regexp "^abcd.+?.com$"
 
 
 Open another console window and run test request via system `dig` tool:
