@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Usage: python3 dns_filter.py --verbose --port 10053 --to xyz.net --regexp "^abcd.+?.com$"
+Usage: python3 dns_filter.py --verbose --port 10053 --cname xyz.net --ns1 ns1.example.com. --ns2 ns2.example.com. --regexp "^abcd.+?.com$"
 
 Custom forwarding DNS server.
 Redirects input traffic matching given regular expression to a given host.
@@ -10,7 +10,9 @@ Options:
     -h, --help            show this help message and exit
     -v, --verbose         log incoming requests to the console
     -p PORT, --port=PORT  DNS server port number
-    -t TO, --to=TO        destination CNAME
+    -c CNAME, --cname=CNAME        destination CNAME
+    --ns1=NAMESERVER1        destination NAMESERVER1
+    --ns2=NAMESERVER2       destination NAMESERVER2
     -r REGEXP, --regexp=REGEXP
                           regular expression to be checked
     -i INTERFACE, --interface=INTERFACE
@@ -18,7 +20,7 @@ Options:
 
 Example:
     $ python3 -m pip install twisted
-    $ python3 dns_filter.py --verbose --port=10053 --to=xyz.net --regexp="^abcd.+?.com$"
+    $ python3 dns_filter.py --verbose --port=10053 --cname=xyz.net --ns1 ns1.example.com. --ns2 ns2.example.com. --regexp="^abcd.+?.com$"
 
     $ dig -p 10053 @localhost abcd-example.com CNAME +short
     xyz.net
@@ -49,8 +51,10 @@ class DynamicResolver(object):
     query type and name.
     """
 
-    def __init__(self, to, regexp, verbose=False):
-        self.to = to
+    def __init__(self, cname, nameserver1, nameserver2, regexp, verbose=False):
+        self.cname = cname
+        self.nameserver1 = nameserver1
+        self.nameserver2 = nameserver2
         self.regexp = re.compile(regexp, flags=re.IGNORECASE) if regexp else None
         self.verbose = verbose
 
@@ -78,7 +82,7 @@ class DynamicResolver(object):
                 name=name,
                 type=dns.CNAME,
                 payload=dns.Record_CNAME(
-                    name=self.to,
+                    name=self.cname,
                 ),
             ),
             dns.RRHeader(
@@ -96,14 +100,14 @@ class DynamicResolver(object):
                 name=name,
                 type=dns.NS,
                 payload=dns.Record_NS(
-                    name='work.offshore.ai.',
+                    name=self.nameserver1,
                 ),
             ),
             dns.RRHeader(
                 name=name,
                 type=dns.NS,
                 payload=dns.Record_NS(
-                    name='auction.whois.ai.',
+                    name=self.nameserver2,
                 ),
             ),
         ]
@@ -139,11 +143,14 @@ def main():
     p = optparse.OptionParser(
         description='Custom DNS server. Redirects input traffic matching given regular expression to given host.',
         prog='dns_filter',
-        usage='python dns_filter.py --port 10053 --to xyz.net --regexp "^abcd.+?.com$"'
+        usage='python3 dns_filter.py --verbose --port 10053 --cname xyz.net --ns1 ns1.example.com. '
+              '--ns2 ns2.example.com. --regexp "^abcd.+?.com$"'
     )
     p.add_option('--verbose', '-v', help="log incoming requests to the console", default=False, action="store_true")
     p.add_option('--port', '-p', help="DNS server port number",  default=10053, type='int')
-    p.add_option('--to', '-t', help="destination CNAME", default="127.0.0.1")
+    p.add_option('--cname', '-c', help="destination CNAME")
+    p.add_option('--ns1', help="Nameserver 1")
+    p.add_option('--ns2', help="Nameserver 2")
     p.add_option('--regexp', '-r', help="regular expression to be checked")
     p.add_option('--interface', '-i', help="interface IP to listen on", default="")
     options, arguments = p.parse_args()
@@ -151,9 +158,11 @@ def main():
     factory = server.DNSServerFactory(
         clients=[
             DynamicResolver(
-                to=options.to,
+                cname=options.cname,
                 regexp=options.regexp,
                 verbose=options.verbose,
+                nameserver1=options.ns1,
+                nameserver2=options.ns2
             ),
         ],
     )
